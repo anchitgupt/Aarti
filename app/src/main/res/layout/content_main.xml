@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="ateam.com.aarti.MainActivity"
+    tools:showIn="@layout/activity_main">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/findMedia"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Choose the Media" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/findMediaText"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:textAlignment="center"
+        android:autoSizeTextType="uniform"
+        android:textSize="22sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Aarti Name: "
+            android:textSize="21sp"
+            android:textStyle="bold" />
+
+        <me.gujun.android.taggroup.TagGroup
+            android:id="@+id/name_tag"
+            style="@style/TagGroup.Large"
+            android:layout_marginStart="5dp"
+            app:atg_isAppendMode="true" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Devta: "
+            android:textSize="21sp"
+            android:textStyle="bold" />
+
+        <me.gujun.android.taggroup.TagGroup
+            android:id="@+id/devta_tag"
+            style="@style/TagGroup.Large"
+            android:layout_marginStart="5dp"
+            app:atg_isAppendMode="true" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Days: "
+            android:textSize="21sp"
+            android:textStyle="bold" />
+
+        <Spinner
+            android:id="@+id/day_choose"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:entries="@array/days"
+            android:spinnerMode="dialog">
+
+        </Spinner>
+
+    </LinearLayout>
+
+    <android.support.design.widget.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp">
+
+        <EditText
+            android:id="@+id/composer_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Enter Composer "
+            android:textAlignment="center" />
+
+    </android.support.design.widget.TextInputLayout>
+
+    <Button
+        android:id="@+id/submit"
+        android:text="Submit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+</LinearLayout>

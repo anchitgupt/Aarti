@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Aarti</string>
+    <string name="action_settings">Settings</string>
+    <string-array name="days">
+        <item>Sunday</item>
+        <item>Monday</item>
+        <item>Tuesaday</item>
+        <item>Wednesday</item>
+        <item>Thursday</item>
+        <item>Friday</item>
+        <item>Saturday</item>
+    </string-array>
+</resources>
