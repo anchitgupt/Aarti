@@ -25,14 +25,21 @@ import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import org.w3c.dom.Text;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 import me.gujun.android.taggroup.TagGroup;
 
@@ -46,7 +53,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TagGroup devtaName;
     private EditText composerName; // optional
     private EditText mediaName;
-    private Spinner spinnerDays;
+    private Spinner spinnerDays, spinnerDays2;
     private Uri path;
 
     private Uri uri;
@@ -81,6 +88,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         composerName = findViewById(R.id.composer_name);
         mediaName = findViewById(R.id.findMediaText);
         spinnerDays = findViewById(R.id.day_choose);
+        spinnerDays2 = findViewById(R.id.day_choose2);
 
         openMedia.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -107,7 +115,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         final String key = mFirebaseDatabseRef.push().getKey();
         final String aartiNameText = getFullName(aartiName.getTags());
         final String devtaNameText = getFullName(devtaName.getTags());
-        final String day = spinnerDays.getSelectedItem().toString();
+        final String day;
+        final String[] dayPreviousValue = new String[1];
+        if (spinnerDays2.getSelectedItemPosition() == 0)
+            day = spinnerDays.getSelectedItem().toString();
+        else
+            day = spinnerDays.getSelectedItem().toString() + "|" + spinnerDays2.getSelectedItem().toString();
 
         progressBar = new ProgressDialog(this);
         progressBar.show();
@@ -133,9 +146,45 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         Toast.makeText(MainActivity.this, "Updated", Toast.LENGTH_SHORT).show();
                                         Log.e(TAG, "onSuccess: Database Updated");
 
+                                        // TODO: 30/12/17 add the code for the name --> key for reverse searching
+
+                                        if(spinnerDays.getSelectedItemPosition() == 0)
+                                            Toast.makeText(MainActivity.this, "Choose Day", Toast.LENGTH_SHORT).show();
+                                        else
+                                        mFirebaseDatabseRef.child(spinnerDays.getSelectedItem().toString()).addListenerForSingleValueEvent(new ValueEventListener() {
+                                            @Override
+                                            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                                                HashMap<String, Object> map = new HashMap<>();
+                                                map.put(key, devtaNameText);
+
+                                                dataSnapshot.getRef().updateChildren(map).
+                                                        addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                            @Override
+                                                            public void onSuccess(Void aVoid) {
+                                                                Toast.makeText(MainActivity.this, "Values Updated", Toast.LENGTH_SHORT).show();
+                                                                Log.e(TAG, "onSuccess: Map Updated");
+
+                                                                aartiName.setTags("");
+                                                                devtaName.setTags("");
+                                                                composerName.setText("");
 
 
+                                                            }
+                                                        }).addOnFailureListener(new OnFailureListener() {
+                                                    @Override
+                                                    public void onFailure(@NonNull Exception e) {
+                                                        Toast.makeText(MainActivity.this, "Map Failed", Toast.LENGTH_SHORT).show();
+                                                        Log.e(TAG, "onFailure: Failed : " + e.getMessage(), new Throwable("Error"));
+                                                    }
+                                                });
+                                            }
 
+                                            @Override
+                                            public void onCancelled(DatabaseError databaseError) {
+
+                                            }
+                                        });
                                     }
                                 })
                                 .addOnFailureListener(new OnFailureListener() {
@@ -144,26 +193,51 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                                     }
                                 });
+                            //todo call for the spinnerDays2 also
+                    if(spinnerDays2.getSelectedItemPosition() != 0)
+                        mFirebaseDatabseRef.child(spinnerDays2.getSelectedItem().toString()).addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
 
-                    }
-                })
-                .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-                    @Override
-                    public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                        int progress = (int) (taskSnapshot.getBytesTransferred() / taskSnapshot.getTotalByteCount());
-                        progress *= 100;
-                        progressBar.setProgress(progress);
+                                HashMap<String, Object> map = new HashMap<>();
+                                map.put(key, devtaNameText);
+
+                                dataSnapshot.getRef().updateChildren(map).
+                                        addOnSuccessListener(new OnSuccessListener<Void>() {
+                                            @Override
+                                            public void onSuccess(Void aVoid) {
+                                                Toast.makeText(MainActivity.this, "Values Updated", Toast.LENGTH_SHORT).show();
+                                                Log.e(TAG, "onSuccess: Map Updated");
+
+                                                aartiName.setTags("");
+                                                devtaName.setTags("");
+                                                composerName.setText("");
+
+
+                                            }
+                                        }).addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        Toast.makeText(MainActivity.this, "Map Failed", Toast.LENGTH_SHORT).show();
+                                        Log.e(TAG, "onFailure: Failed : " + e.getMessage(), new Throwable("Error"));
+                                    }
+                                });
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+
+                            }
+                        });
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        Log.e(TAG, "onFailure: " + e.getMessage());
-                        Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        progressBar.dismiss();
 
                     }
                 });
+
         progressBar.dismiss();
 
     }
@@ -173,7 +247,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         String name = "";
 
         for (int i = 0; i < names.length; i++)
-            if (name == "")
+            if (Objects.equals(name, ""))
                 name = names[i];
             else
                 name = name + "|" + names[i];
