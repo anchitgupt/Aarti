@@ -39,6 +39,7 @@
         android:textAlignment="center"
         android:textSize="22sp" />
 
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -52,13 +53,24 @@
             android:textSize="21sp"
             android:textStyle="bold" />
 
-        <me.gujun.android.taggroup.TagGroup
-            android:id="@+id/name_tag"
-            style="@style/TagGroup.Large"
-            android:layout_marginStart="5dp"
-            app:atg_isAppendMode="true" />
+        <Spinner
+            android:id="@+id/spinner_aarti_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
     </LinearLayout>
+    <EditText
+        android:id="@+id/newentry"
+        android:layout_margin="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="30dp" />
+    <ImageButton
+        android:id="@+id/imageButtonAddField"
+        android:layout_gravity="center"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:contentDescription="Add New Field In Spinner"
+        app:srcCompat="@android:drawable/ic_input_add" />
 
     <LinearLayout
         android:layout_width="match_parent"

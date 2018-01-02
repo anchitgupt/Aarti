@@ -10,11 +10,13 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -30,7 +32,10 @@ import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import me.gujun.android.taggroup.TagGroup;
@@ -38,18 +43,25 @@ import me.gujun.android.taggroup.TagGroup;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String TAG = "MainActivity";
+    private static final String TABLE_AARTI="aarti";
+
     private static int MEDIA_REQUEST_CODE = 1;
-    private TagGroup aartiName;
+
     private TagGroup devtaName;
     private EditText composerName; // optional
     private EditText mediaName;
-    private Spinner spinnerDays, spinnerDays2;
+    private Spinner spinnerDays, spinnerDays2, spinnerAarti;
     private Uri path;
     private Uri uri;
     private ProgressDialog progressDialog;
     private DatabaseReference mFirebaseDatabseRef;
     private StorageReference mStorageRef;
-
+    private ImageButton addNewField;
+    private List<AartiBucket> list;
+    private ArrayList<String> arrayList;
+    private AartiBucket aartiBucket;
+    private String m_Text = "";
+    private EditText newEntry;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,13 +74,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Button openMedia = findViewById(R.id.findMedia);
         Button submitData = findViewById(R.id.submit);
 
-        aartiName = findViewById(R.id.name_tag);
+
+        aartiBucket = new AartiBucket();
+
+        spinnerAarti = findViewById(R.id.spinner_aarti_name);
         devtaName = findViewById(R.id.devta_tag);
+        addNewField = findViewById(R.id.imageButtonAddField);
 
         composerName = findViewById(R.id.composer_name);
         mediaName = findViewById(R.id.findMediaText);
         spinnerDays = findViewById(R.id.day_choose);
         spinnerDays2 = findViewById(R.id.day_choose2);
+        newEntry = findViewById(R.id.newentry);
 
         openMedia.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -84,21 +101,123 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         submitData.setOnClickListener(this);
 
+
+        addItems();
+
+        addNewField.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                addnewFieldName(newEntry.getText().toString());
+            }
+        });
+
         mFirebaseDatabseRef = FirebaseDatabase.getInstance().getReference();
         mStorageRef = FirebaseStorage.getInstance().getReference();
 
     }
 
+    private void addnewFieldName(final String m_text) {
+        FirebaseDatabase.getInstance().getReference("0").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                arrayList = new ArrayList<>();
+                list = new ArrayList<>();
+                String s= "";
+                final int size = (int) dataSnapshot.getChildrenCount();
+                Log.e(TAG, "onDataChange: " + size);
+
+                for (DataSnapshot myData :
+                        dataSnapshot.getChildren()) {
+                    s = myData.getValue(String.class);
+                }
+                dataSnapshot.getRef().removeValue();
+                /*String[] str = s.split("|");
+
+                int len = str.length;
+
+                for (int i=0; i<len; i++){
+                       arrayList.add(str[i]);
+                }
+                arrayList.add(s);*/
+
+                ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(MainActivity.this,
+                        android.R.layout.simple_spinner_item, arrayList);
+                arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                spinnerAarti.setAdapter(arrayAdapter);
+
+                Map<String, Object> map = new HashMap<>();
+                map.put("\"name\"",s + "," + m_text);
+
+
+                /**
+                 *
+                 * child updating
+                 */
+                FirebaseDatabase.getInstance().getReference("0").updateChildren(map).addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        Log.e(TAG, "onSuccessDataHash: ");
+                        newEntry.setText("");
+                        addItems();
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+
+                    }
+                });
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    private void addItems() {
+        FirebaseDatabase.getInstance().getReference("0").child("\"name\"").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                int size = (int) dataSnapshot.getChildrenCount();
+                Log.e(TAG, "onDataChange: " + size);
+
+                String s = null;
+                s = dataSnapshot.getValue().toString();
+
+                Log.e(TAG, "onDataSnapshotValue: "+s );
+
+                /*for(int i=0;i < list.size(); i++){
+                    Log.e(TAG, "onDataChange: "+String.valueOf(list.get(i).getNum())+ list.get(i).getAartiName());
+                    arrayList.add( list.get(i).getAartiName());
+                }*/
+                String[] elements = s.split(",");
+                ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(MainActivity.this,
+                        android.R.layout.simple_spinner_item,elements);
+                arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                spinnerAarti.setAdapter(arrayAdapter);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
     @Override
     public void onClick(View view) {
 
-        if (aartiName.getTags().length == 0 && devtaName.getTags().length == 0 && spinnerDays.getSelectedItemPosition() == 0
+        if (devtaName.getTags().length == 0 && spinnerDays.getSelectedItemPosition() == 0
                 && composerName.getText().toString().trim().isEmpty()) {
             Toast.makeText(this, "complete the data first", Toast.LENGTH_SHORT).show();
 
         } else {
             final String key = mFirebaseDatabseRef.push().getKey();
-            final String aartiNameText = getFullName(aartiName.getTags());
+            final String aartiNameText = spinnerAarti.getSelectedItem().toString();
             final String devtaNameText = getFullName(devtaName.getTags());
             final String aartiText = composerName.getText().toString().trim();
             final String day;
@@ -106,7 +225,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (spinnerDays2.getSelectedItemPosition() == 0)
                 day = spinnerDays.getSelectedItem().toString();
             else
-                day = spinnerDays.getSelectedItem().toString() + "|" + spinnerDays2.getSelectedItem().toString();
+                day = spinnerDays.getSelectedItem().toString() + "," + spinnerDays2.getSelectedItem().toString();
 
             progressDialog = new ProgressDialog(this);
             progressDialog.show();
@@ -135,7 +254,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                              *
                              * @mFirebaseDatabe is creating a new entry to the corresponding song uploaded
                              */
-                            mFirebaseDatabseRef.child(key).setValue(song)
+                            mFirebaseDatabseRef.child(TABLE_AARTI).child(key).setValue(song)
                                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                                         @Override
                                         public void onSuccess(Void aVoid) {
@@ -196,7 +315,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                                         Toast.makeText(MainActivity.this, "Values Updated", Toast.LENGTH_SHORT).show();
                                                                         Log.e(TAG, "onSuccess: Map Updated");
 
-                                                                        aartiName.setTags("");
+
                                                                         devtaName.setTags("");
                                                                         composerName.setText("");
 
@@ -253,7 +372,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (Objects.equals(name, ""))
                 name = names[i];
             else
-                name = name + "|" + names[i];
+                name = name + "," + names[i];
 
         return name;
     }
