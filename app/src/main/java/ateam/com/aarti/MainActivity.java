@@ -69,14 +69,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
 
 
         openMedia = findViewById(R.id.findMedia); //button
@@ -112,133 +104,156 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View view) {
 
-        final String key = mFirebaseDatabseRef.push().getKey();
-        final String aartiNameText = getFullName(aartiName.getTags());
-        final String devtaNameText = getFullName(devtaName.getTags());
-        final String day;
-        final String[] dayPreviousValue = new String[1];
-        if (spinnerDays2.getSelectedItemPosition() == 0)
-            day = spinnerDays.getSelectedItem().toString();
-        else
-            day = spinnerDays.getSelectedItem().toString() + "|" + spinnerDays2.getSelectedItem().toString();
+        if (aartiName.getTags().length == 0 && devtaName.getTags().length == 0 && spinnerDays.getSelectedItemPosition() == 0
+                && composerName.getText().toString().trim().isEmpty()) {
+            Toast.makeText(this, "complete the data first", Toast.LENGTH_SHORT).show();
 
-        progressBar = new ProgressDialog(this);
-        progressBar.show();
+        } else {
+            final String key = mFirebaseDatabseRef.push().getKey();
+            final String aartiNameText = getFullName(aartiName.getTags());
+            final String devtaNameText = getFullName(devtaName.getTags());
+            final String aartiText = composerName.getText().toString().trim();
+            final String day;
+            final String[] dayPreviousValue = new String[1];
+            if (spinnerDays2.getSelectedItemPosition() == 0)
+                day = spinnerDays.getSelectedItem().toString();
+            else
+                day = spinnerDays.getSelectedItem().toString() + "|" + spinnerDays2.getSelectedItem().toString();
 
-        StorageReference stref =
-                mStorageRef.child(key).child(mediaName.getText().toString().trim());
+            progressBar = new ProgressDialog(this);
+            progressBar.show();
 
-        stref.putFile(uri)
-                .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                    @Override
-                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                        path = taskSnapshot.getDownloadUrl();
-                        Toast.makeText(MainActivity.this, "Path: " + path.getEncodedPath(), Toast.LENGTH_SHORT).show();
-                        Log.e(TAG, "onSuccess: " + String.valueOf(path));
+            StorageReference stref =
+                    mStorageRef.child(key).child(mediaName.getText().toString().trim());
 
-                        Song song = new Song(key, aartiNameText, devtaNameText,
-                                day, String.valueOf(path), "");
-
-                        mFirebaseDatabseRef.child(key).setValue(song)
-                                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                    @Override
-                                    public void onSuccess(Void aVoid) {
-                                        Toast.makeText(MainActivity.this, "Updated", Toast.LENGTH_SHORT).show();
-                                        Log.e(TAG, "onSuccess: Database Updated");
-
-                                        // TODO: 30/12/17 add the code for the name --> key for reverse searching
-
-                                        if(spinnerDays.getSelectedItemPosition() == 0)
-                                            Toast.makeText(MainActivity.this, "Choose Day", Toast.LENGTH_SHORT).show();
-                                        else
-                                        mFirebaseDatabseRef.child(spinnerDays.getSelectedItem().toString()).addListenerForSingleValueEvent(new ValueEventListener() {
-                                            @Override
-                                            public void onDataChange(DataSnapshot dataSnapshot) {
-
-                                                HashMap<String, Object> map = new HashMap<>();
-                                                map.put(key, devtaNameText);
-
-                                                dataSnapshot.getRef().updateChildren(map).
-                                                        addOnSuccessListener(new OnSuccessListener<Void>() {
-                                                            @Override
-                                                            public void onSuccess(Void aVoid) {
-                                                                Toast.makeText(MainActivity.this, "Values Updated", Toast.LENGTH_SHORT).show();
-                                                                Log.e(TAG, "onSuccess: Map Updated");
-
-                                                                aartiName.setTags("");
-                                                                devtaName.setTags("");
-                                                                composerName.setText("");
+            /**
+             * First File is uploaded
+             * in the Firebase Storage
+             */
+            stref.putFile(uri)
+                    .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
 
 
-                                                            }
-                                                        }).addOnFailureListener(new OnFailureListener() {
+                            path = taskSnapshot.getDownloadUrl();
+                            Toast.makeText(MainActivity.this, "Path: " + path.getEncodedPath(), Toast.LENGTH_SHORT).show();
+                            Log.e(TAG, "onSuccess: " + String.valueOf(path));
+
+                            Song song = new Song(key, aartiNameText, devtaNameText,
+                                    day, String.valueOf(path), aartiText);
+
+                            /**
+                             *
+                             * @mFirebaseDatabe is creating a new entry to the corresponding song uploaded
+                             */
+                            mFirebaseDatabseRef.child(key).setValue(song)
+                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                        @Override
+                                        public void onSuccess(Void aVoid) {
+                                            Toast.makeText(MainActivity.this, "Updated", Toast.LENGTH_SHORT).show();
+                                            Log.e(TAG, "onSuccess: Database Updated");
+
+                                            progressBar.dismiss();
+
+                                            //  30/12/17 add the code for the name --> key for reverse searching
+
+                                            if (spinnerDays.getSelectedItemPosition() == 0)
+                                                Toast.makeText(MainActivity.this, "Choose Day", Toast.LENGTH_SHORT).show();
+                                            else
+                                                mFirebaseDatabseRef.child(spinnerDays.getSelectedItem().toString()).addListenerForSingleValueEvent(new ValueEventListener() {
                                                     @Override
-                                                    public void onFailure(@NonNull Exception e) {
-                                                        Toast.makeText(MainActivity.this, "Map Failed", Toast.LENGTH_SHORT).show();
-                                                        Log.e(TAG, "onFailure: Failed : " + e.getMessage(), new Throwable("Error"));
+                                                    public void onDataChange(DataSnapshot dataSnapshot) {
+
+                                                        HashMap<String, Object> map = new HashMap<>();
+                                                        map.put(key, devtaNameText);
+
+                                                        dataSnapshot.getRef().updateChildren(map).
+                                                                addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                                    @Override
+                                                                    public void onSuccess(Void aVoid) {
+                                                                        Toast.makeText(MainActivity.this, "Values Updated", Toast.LENGTH_SHORT).show();
+                                                                        Log.e(TAG, "onSuccess: Map Updated");
+
+                                                                    }
+                                                                }).addOnFailureListener(new OnFailureListener() {
+                                                            @Override
+                                                            public void onFailure(@NonNull Exception e) {
+                                                                Toast.makeText(MainActivity.this, "Map Failed", Toast.LENGTH_SHORT).show();
+                                                                Log.e(TAG, "onFailure: Failed : " + e.getMessage(), new Throwable("Error"));
+                                                            }
+                                                        });
+                                                    }
+
+                                                    @Override
+                                                    public void onCancelled(DatabaseError databaseError) {
+
                                                     }
                                                 });
-                                            }
-
-                                            @Override
-                                            public void onCancelled(DatabaseError databaseError) {
-
-                                            }
-                                        });
-                                    }
-                                })
-                                .addOnFailureListener(new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull Exception e) {
-
-                                    }
-                                });
-                            //todo call for the spinnerDays2 also
-                    if(spinnerDays2.getSelectedItemPosition() != 0)
-                        mFirebaseDatabseRef.child(spinnerDays2.getSelectedItem().toString()).addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-
-                                HashMap<String, Object> map = new HashMap<>();
-                                map.put(key, devtaNameText);
-
-                                dataSnapshot.getRef().updateChildren(map).
-                                        addOnSuccessListener(new OnSuccessListener<Void>() {
-                                            @Override
-                                            public void onSuccess(Void aVoid) {
-                                                Toast.makeText(MainActivity.this, "Values Updated", Toast.LENGTH_SHORT).show();
-                                                Log.e(TAG, "onSuccess: Map Updated");
-
-                                                aartiName.setTags("");
-                                                devtaName.setTags("");
-                                                composerName.setText("");
 
 
-                                            }
-                                        }).addOnFailureListener(new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull Exception e) {
-                                        Toast.makeText(MainActivity.this, "Map Failed", Toast.LENGTH_SHORT).show();
-                                        Log.e(TAG, "onFailure: Failed : " + e.getMessage(), new Throwable("Error"));
-                                    }
-                                });
-                            }
+                                            //call for the spinnerDays2 also
+                                            if (spinnerDays2.getSelectedItemPosition() != 0)
+                                                mFirebaseDatabseRef.child(spinnerDays2.getSelectedItem().toString()).addListenerForSingleValueEvent(new ValueEventListener() {
+                                                    @Override
+                                                    public void onDataChange(DataSnapshot dataSnapshot) {
 
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
+                                                        HashMap<String, Object> map = new HashMap<>();
+                                                        map.put(key, devtaNameText);
 
-                            }
-                        });
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
+                                                        dataSnapshot.getRef().updateChildren(map).
+                                                                addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                                    @Override
+                                                                    public void onSuccess(Void aVoid) {
+                                                                        Toast.makeText(MainActivity.this, "Values Updated", Toast.LENGTH_SHORT).show();
+                                                                        Log.e(TAG, "onSuccess: Map Updated");
 
-                    }
-                });
+                                                                        aartiName.setTags("");
+                                                                        devtaName.setTags("");
+                                                                        composerName.setText("");
 
-        progressBar.dismiss();
+
+                                                                    }
+                                                                }).addOnFailureListener(new OnFailureListener() {
+                                                            @Override
+                                                            public void onFailure(@NonNull Exception e) {
+                                                                Toast.makeText(MainActivity.this, "Map Failed", Toast.LENGTH_SHORT).show();
+                                                                Log.e(TAG, "onFailure: Failed : " + e.getMessage(), new Throwable("Error"));
+                                                            }
+                                                        });
+                                                    }
+
+                                                    @Override
+                                                    public void onCancelled(DatabaseError databaseError) {
+
+                                                    }
+                                                });
+                                        }
+                                    })
+                                    .addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+
+                                        }
+                                    });
+
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            progressBar.dismiss();
+                        }
+                    }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                    double per = (100 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
+                    progressBar.setMessage((int) per + " % completed...");
+                }
+            });
+
+
+        }
 
     }
 

@@ -1,7 +1,10 @@
 package ateam.com.aarti;
 
 /**
- * Created by apple on 30/12/17.
+ Project Aarti
+ * Created by Anchit Gupta on 30/12/17.
+ Under the MIT License
+
  */
 
 public class Song {
