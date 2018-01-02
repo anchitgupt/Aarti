@@ -7,9 +7,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v4.widget.ContentLoadingProgressBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -18,9 +15,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
@@ -35,10 +30,7 @@ import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
-import org.w3c.dom.Text;
-
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 import me.gujun.android.taggroup.TagGroup;
@@ -47,17 +39,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private static final String TAG = "MainActivity";
     private static int MEDIA_REQUEST_CODE = 1;
-    private Button openMedia;
-    private Button submitData;
     private TagGroup aartiName;
     private TagGroup devtaName;
     private EditText composerName; // optional
     private EditText mediaName;
     private Spinner spinnerDays, spinnerDays2;
     private Uri path;
-
     private Uri uri;
-    private ProgressDialog progressBar;
+    private ProgressDialog progressDialog;
     private DatabaseReference mFirebaseDatabseRef;
     private StorageReference mStorageRef;
 
@@ -70,9 +59,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setSupportActionBar(toolbar);
 
 
-
-        openMedia = findViewById(R.id.findMedia); //button
-        submitData = findViewById(R.id.submit);  //button
+        Button openMedia = findViewById(R.id.findMedia);
+        Button submitData = findViewById(R.id.submit);
 
         aartiName = findViewById(R.id.name_tag);
         devtaName = findViewById(R.id.devta_tag);
@@ -120,8 +108,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             else
                 day = spinnerDays.getSelectedItem().toString() + "|" + spinnerDays2.getSelectedItem().toString();
 
-            progressBar = new ProgressDialog(this);
-            progressBar.show();
+            progressDialog = new ProgressDialog(this);
+            progressDialog.show();
 
             StorageReference stref =
                     mStorageRef.child(key).child(mediaName.getText().toString().trim());
@@ -154,7 +142,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                             Toast.makeText(MainActivity.this, "Updated", Toast.LENGTH_SHORT).show();
                                             Log.e(TAG, "onSuccess: Database Updated");
 
-                                            progressBar.dismiss();
+                                            progressDialog.dismiss();
 
                                             //  30/12/17 add the code for the name --> key for reverse searching
 
@@ -242,13 +230,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     .addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
-                            progressBar.dismiss();
+                            progressDialog.dismiss();
                         }
                     }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
                     double per = (100 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
-                    progressBar.setMessage((int) per + " % completed...");
+                    progressDialog.setMessage((int) per + " % completed...");
                 }
             });
 
